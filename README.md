@@ -1,13 +1,15 @@
 # Burst2ManagedCall
 How to call managed functions (like Thread.Sleep) from Burst
 
-This demo contains of few interesting blocks that can be used together with Burst.
+This demo contains a few interesting blocks that can be used together with Burst.
+
+![Screenshot of working demo](DocPrintScreen.png)
 
 ## What exactly?
 
 We have a function
 
-```
+```csharp
     private static void SleepManaged(int milliseconds)
     {
         // C# managed land
@@ -39,7 +41,7 @@ SharedStatic wrapper for `FunctionPointer<T>` that is extracted from the delegat
 
 We need to create a delegate for our function `private delegate void SleepManagedDelegate(int milliseconds);` and mark the delegate with `cdecl` and the function with `MonoPInvokeCallback`:
 
-```
+```csharp
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate void SleepManagedDelegate(int milliseconds);
     
@@ -49,7 +51,7 @@ We need to create a delegate for our function `private delegate void SleepManage
 
 ### Initialize things from the managed C#
 
-```
+```csharp
     [BurstDiscard]
     public static void InitializeFromManaged()
     {
@@ -57,19 +59,19 @@ We need to create a delegate for our function `private delegate void SleepManage
     }
 ```
 
-This is an initialization step that we have to do from managed C# once. It is marked as `BurstDiscard`, because Burst cannot compile this code.
-Also, don't call it from static constructors, because Burst can call static constructors and that would be a hard-to-debug surprise for you.
+This is an initialization step that we have to do from managed C# once. It is marked as `BurstDiscard` because Burst cannot compile this code.
+Also, don't call it from static constructors, because Burst can call static constructors, which would be a hard-to-debug surprise for you.
 
 
 ### Do the call from the Burst
 
 
 Just a usual call like that (or from a job):
-```
+```csharp
 [BurstCompile]
 public class EntryPointMonoBehaviour : MonoBehaviour
 {
-	[BurstCompile]
+    [BurstCompile]
     static void RunBurstDirectCall()
     {
     	...
@@ -82,7 +84,7 @@ public class EntryPointMonoBehaviour : MonoBehaviour
 
 where `BurstSleep.Sleep(int milliseconds)` is:
 
-```    
+```csharp
 public static void Sleep(int milliseconds)
 {
 	// get the FunctionPointer<SleepManagedDelegate>
@@ -100,4 +102,4 @@ public static void Sleep(int milliseconds)
 }
 ```
 
-The unmanaged delegate call is not really needed if you never going to call this from managed. Otherwise (in debug-burst-is-off situations) it is probably better do to that if you want non-alloc call.
+The unmanaged delegate call is not really needed if you never going to call this from managed. Otherwise (in debug-burst-is-off situations) it is probably better to do that if you want a non-alloc call.
